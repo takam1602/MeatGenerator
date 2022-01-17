@@ -1,0 +1,167 @@
+﻿@page "/meatGenerator"
+@using OpenCvSharp
+@using Microsoft.AspNetCore.Components.Web
+@inject IJSRuntime jsRuntime;
+@inject HttpClient httpClient;
+@implements IDisposable
+
+<PageTitle>Meat Generator v1.0</PageTitle>
+
+<h2>ロース芯の大きい順，脂肪交雑の多い順，肉の色の淡い順に並べ替えてください．</h2>
+
+<div>1:
+    <canvas @ref="srcCanvas1" width="256" height="256" style="border:1px solid gray;">
+        Your browser does not support the HTML5 canvas tag.
+    </canvas>
+    2:
+    <canvas @ref="srcCanvas2" width="256" height="256" style="border:1px solid gray;">
+        Your browser does not support the HTML5 canvas tag.
+    </canvas>
+    3:
+    <canvas @ref="srcCanvas3" width="256" height="256" style="border:1px solid gray;">
+        Your browser does not support the HTML5 canvas tag.
+    </canvas>
+    4:
+    <canvas @ref="srcCanvas4" width="256" height="256" style="border:1px solid gray;">
+        Your browser does not support the HTML5 canvas tag.
+    </canvas>
+</div>
+
+<div>
+    <button @onclick="@(async () => await NextImage())">Next</button>
+    <button @onclick="ShowAnswer">Answer</button>
+    <p>大-----ロース芯面積-----小</p>
+    <p>@size</p>
+    <p>@sized</p>
+    <p>多-----脂肪交雑-----少</p>
+    <p>@bms</p>
+    <p>@bmsd</p>
+    <p>淡-----肉の色-----濃</p>
+    <p>@mc</p>
+    <p>@mcd</p>
+
+</div>
+
+@code {
+    private Mat? srcMat;
+    private ElementReference srcCanvas1;
+    private ElementReference srcCanvas2;
+    private ElementReference srcCanvas3;
+    private ElementReference srcCanvas4;
+    private CanvasClient? srcCanvasClient1;
+    private CanvasClient? srcCanvasClient2;
+    private CanvasClient? srcCanvasClient3;
+    private CanvasClient? srcCanvasClient4;
+
+    private string bms = "BMS: ";
+    private string bmsd = "Data: ";
+    private string size = "Area: ";
+    private string sized = "Data: ";
+    private string mc ="Meat Color";
+    private string mcd ="Data";
+
+    List<Meat> result = new();
+
+    private MeatGenerator gen = new();
+
+    public void Dispose()
+    {
+        srcMat?.Dispose();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
+        //await this.NextImage();
+    }
+
+    private async Task NextImage()
+    {
+        this.bms  = "BMS:          ";
+        this.bmsd  = "Data:          ";
+        this.size = "Area:         ";
+        this.sized = "Data:         ";
+        this.mc   = "Meat Color:   ";
+        this.mcd   = "Data:   ";
+
+        result.Clear();
+
+        srcCanvasClient1 ??= new CanvasClient(jsRuntime, srcCanvas1);
+        srcCanvasClient2 ??= new CanvasClient(jsRuntime, srcCanvas2);
+        srcCanvasClient3 ??= new CanvasClient(jsRuntime, srcCanvas3);
+        srcCanvasClient4 ??= new CanvasClient(jsRuntime, srcCanvas4);
+
+        srcMat = gen.MeatMat(1);
+        result.Add(gen.MeatData);
+        await srcCanvasClient1.DrawMatAsync(srcMat);
+
+        srcMat = gen.MeatMat(2);
+        result.Add(gen.MeatData);
+        await srcCanvasClient2.DrawMatAsync(srcMat);
+
+        srcMat = gen.MeatMat(3);
+        result.Add(gen.MeatData);
+        await srcCanvasClient3.DrawMatAsync(srcMat);
+
+        srcMat = gen.MeatMat(4);
+        result.Add(gen.MeatData);
+        await srcCanvasClient4.DrawMatAsync(srcMat);
+    }
+
+    private void ShowAnswer()
+    {
+        this.bms  = "BMS:          ";
+        this.bmsd  = "Data:          ";
+        this.size = "Area:         ";
+        this.sized = "Data:         ";
+        this.mc   = "Meat Color:   ";
+        this.mcd   = "Data:   ";
+
+        var ar = result.OrderByDescending(r => r.Area);
+        int c = 0;
+        foreach (var a in ar)
+        {
+            this.size += a.Key;
+            this.sized+= (int)(a.Area);
+            if (c < result.Count - 1)
+            {
+                this.size += " > ";
+                this.sized += " > ";
+            }
+            c++;
+        }
+        c = 0;
+
+        var bm = result.OrderByDescending(r => r.BMS);
+        foreach (var a in bm)
+        {
+            this.bms += a.Key;
+            this.bmsd += (int)(a.BMS);
+            if (c < result.Count - 1)
+            {
+                this.bms += " > ";
+                this.bmsd += ">";
+            }
+            c++;
+        }
+        c = 0;
+
+        var m = result.OrderBy(r => r.MeatColor);
+        foreach (var a in m)
+        {
+            this.mc += a.Key;
+            this.mcd += (int)(a.MeatColor);
+            if (c < result.Count-1)
+            {
+                this.mc += " > ";
+                this.mcd += " > ";
+            }
+            c++;
+        }
+    }
+}

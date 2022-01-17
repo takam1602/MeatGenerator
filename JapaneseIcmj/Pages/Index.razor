@@ -1,0 +1,72 @@
+﻿@page "/"
+@using OpenCvSharp
+@inject IJSRuntime jsRuntime;
+
+<PageTitle>Meat Generatorのページ</PageTitle>
+<a href = "meatGenerator">
+    <h1>Meat Generator </h1>
+</a>
+
+<p>
+疑似的に枝肉切開面のロース芯画像を生成します．
+</p>
+
+<h2>How to use</h2>
+<p>
+    Nextボタンを押して画像を生成，Answerボタンで答えを表示します．
+</p>
+
+<p>
+    ジャッジングの自主練にどうぞ．
+</p>
+
+<p>問題の報告，修正依頼は
+    <a href="https://github.com/takam1602/MeatGenerator" target="_blank">このリポジトリ</a>
+   でIssuesから連絡ください</p>
+
+<p>
+
+shimatさんのサンプル
+</p>
+<a href="https://github.com/shimat/opencvsharp_blazor_sample" target="_blank">
+<canvas @ref="canvasElements" width="128" height="128">
+</canvas>
+</a>
+<p>
+に助けてもらいました．
+</p>
+@code {
+    private ElementReference canvasElements;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
+
+        var imageBytes = new byte[128 * 128 * 4];
+        unsafe
+        {
+            fixed (byte* pImageBytes = imageBytes)
+            {
+                var p = pImageBytes;
+                for (int y = 0; y < 128; y++)
+                {
+                    for (int x = 0; x < 128; x++)
+                    {
+                        // Percentage in the x direction, times 255
+                        var xp = (byte)(x / 128.0 * 255);
+                        // Percentage in the y direction, times 255
+                        var yp = (byte)(y / 128.0 * 255);
+
+                        *(p++) = xp; // R
+                        *(p++) = yp; // G
+                        *(p++) = (byte)(255 - xp); // B
+                        *(p++) = 255; // A
+                    }
+                }
+            }
+        }
+
+        var canvasClients = new CanvasClient(jsRuntime, canvasElements);
+        await canvasClients.DrawPixelsAsync(imageBytes);
+    }  
+}
