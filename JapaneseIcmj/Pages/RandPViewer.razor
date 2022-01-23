@@ -1,0 +1,98 @@
+﻿@page "/rAndPViewer"
+@using OpenCvSharp
+@using OpenCvSharp.Extensions
+@using System.Diagnostics
+@using System.Text
+@using System.IO
+@using JapaneseIcmj
+@inject IJSRuntime jsRuntime;
+@inject HttpClient httpClient;
+@implements IDisposable
+
+<PageTitle>Retail vs Primal</PageTitle>
+
+<h1>(仮)部分肉と精肉でクイズしたい</h1>
+<p>ラベルとかの黒い文字を消去して，お肉だけの状態にしてみたかったのですが計算量の制約に勝てず，アルゴリズムが不十分できれいに消せていません．そもそも，下に表示される正解の画像（処理前）から答えがわかるかというとわかりにくいので，ラベリングなどしてあげる必要があるかもしれません．</p>
+
+<div>
+    <canvas @ref="srcCanvas" width="640" height="480" style="border:1px solid gray;">
+        Your browser does not support the HTML5 canvas tag.
+    </canvas>
+    <canvas @ref="dstCanvas" width="640" height="480" style="border:1px solid gray;">
+        Your browser does not support the HTML5 canvas tag.
+    </canvas>
+</div>
+<div>
+    <button @onclick="@(async () => await Next())">Next</button>
+    <button @onclick="@(async () => await Answer())">Answer</button>
+</div>
+
+@code {
+    private Mat? srcMat;
+    private ElementReference srcCanvas;
+    private ElementReference dstCanvas;
+    private CanvasClient? srcCanvasClient;
+    private CanvasClient? dstCanvasClient;
+    private KOpenCvSharp conv = new();
+
+    public void Dispose()
+    {
+        srcMat?.Dispose();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        //if (!firstRender)
+        //    return;
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private async Task Next()
+    {
+        var rnd = new Random();
+        var b = rnd.Next(0, 255);
+        string imgSrc = "images/"+b+".bmp";
+
+        var s = await httpClient.GetByteArrayAsync(imgSrc);
+        var n = Convert.ToBase64String(s);
+        var imageBytes = Convert.FromBase64String(n);
+        Mat smat = new Mat();
+        try
+        {
+            smat = Cv2.ImDecode(imageBytes, ImreadModes.Color);
+        }
+        catch (Exception e)
+        {
+
+        }
+
+        srcCanvasClient ??= new CanvasClient(jsRuntime, srcCanvas);
+        dstCanvasClient ??= new CanvasClient(jsRuntime, dstCanvas);
+
+        var grayMat = conv.BGR2Gray(smat);
+        Mat dstMat = new();
+        //Cv2.EqualizeHist(grayMat,dstMat);
+        //var biMat = conv.OhtsuBinary(dstMat);
+
+        //var reMat = conv.ResizeNearest(biMat, 480, 640);
+        srcMat = conv.ResizeNearest(smat, 480, 640);
+        dstMat = conv.Black2White(smat, 40, 150);
+        dstMat = conv.ResizeNearest(dstMat, 480, 640);
+
+        await srcCanvasClient.DrawMatAsync(dstMat);
+    }
+
+    private async Task Answer()
+    {
+        if (srcMat is null)
+            throw new InvalidOperationException($"{nameof(srcMat)} is null");
+        if (dstCanvasClient is null)
+            throw new InvalidOperationException($"{nameof(dstCanvasClient)} is null");
+
+        await dstCanvasClient.DrawMatAsync(srcMat);
+    }
+}

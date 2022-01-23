@@ -56,13 +56,14 @@ namespace JapaneseIcmj
             MeatData = new();
             MeatData.SetKey(key);
             var mat = this.GenerateMeat();
+            //Cv2.PutText(mat,"test",new Point(100,100),HersheyFonts.HersheySimplex,1,new Scalar(255,255,255),-1);
             return mat;
         }
 
         private Mat GenerateMeat()
         {
-            Mat meat = new Mat(new Size(squaresize,squaresize),MatType.CV_8UC3,new Scalar(0,0,0));
-            Mat dstMat = new Mat(new Size(squaresize,squaresize),MatType.CV_8UC3,new Scalar(0,0,0));
+            Mat meat = new Mat(new Size(squaresize,squaresize),MatType.CV_8UC3,new Scalar(255,255,255));
+            Mat dstMat = new Mat(new Size(squaresize,squaresize),MatType.CV_8UC3,new Scalar(255,255,255));
             var shaft = this.EllipseShaftsSize();
             var mc = this.MeatColor();
             var fc = this.FatColor();

@@ -5,42 +5,97 @@
 @inject HttpClient httpClient;
 @implements IDisposable
 
-<PageTitle>Meat Generator v1.0</PageTitle>
+<PageTitle>Meat Generator v2.0</PageTitle>
 
-<h2>ロース芯の大きい順，脂肪交雑の多い順，肉の色の淡い順に並べ替えてください．</h2>
+<h1>
+    Meat Generator v2.0
+</h1>
+<h2>ロース芯(Area)の大きい順，脂肪交雑(BMS)の多い順，肉の色(BCS)の淡い順に並べ替えてください．</h2>
+<p>Nextボタンを押して画像を表示します．表示した画像を見て順位付けをして(3214)のように数字のみを入力してください．そのあとAnswerボタンを押すと答えと点数が表示されます．</p>
 
-<div>1:
-    <canvas @ref="srcCanvas1" width="256" height="256" style="border:1px solid gray;">
-        Your browser does not support the HTML5 canvas tag.
-    </canvas>
-    2:
-    <canvas @ref="srcCanvas2" width="256" height="256" style="border:1px solid gray;">
-        Your browser does not support the HTML5 canvas tag.
-    </canvas>
-    3:
-    <canvas @ref="srcCanvas3" width="256" height="256" style="border:1px solid gray;">
-        Your browser does not support the HTML5 canvas tag.
-    </canvas>
-    4:
-    <canvas @ref="srcCanvas4" width="256" height="256" style="border:1px solid gray;">
-        Your browser does not support the HTML5 canvas tag.
-    </canvas>
+<div>
+    <button @onclick="@(async () => await NextImage())">Generate</button>
+    <button @onclick="ShowAnswer">Answer</button>
 </div>
 
 <div>
-    <button @onclick="@(async () => await NextImage())">Next</button>
-    <button @onclick="ShowAnswer">Answer</button>
-    <p>大-----ロース芯面積-----小</p>
-    <p>@size</p>
-    <p>@sized</p>
-    <p>多-----脂肪交雑-----少</p>
-    <p>@bms</p>
-    <p>@bmsd</p>
-    <p>淡-----肉の色-----濃</p>
-    <p>@mc</p>
-    <p>@mcd</p>
-
+    <table>
+        <tr>
+            <th></th>
+            <td>回答</td>
+            <td>得点(/50点)</td>
+            <td>順位(スプリット) *1</td>
+            <td>データ *2</td>
+        </tr>
+        <tr>
+            <th>Area</th>
+            <td><input id="area" type="number" max="4321" @bind="@areaAns" /><br /></td>
+            <td>@areaScore　</td>
+            <td>@size　</td>
+            <td>@sized</td>
+        </tr>
+        <tr>
+            <th>BMS</th>
+            <td><input id="bms" type="number" max="4321" @bind="@bmsAns" /><br /></td>
+            <td>@bmsScore</td>
+            <td>@bms</td>
+            <td>@bmsd</td>
+        </tr>
+        <tr>
+            <th>BCS</th>
+            <td><input id="mc" type="number" max="4321" @bind="@mcAns" /><br /></td>
+            <td>@mcScore</td>
+            <td>@mc </td>
+            <td>@mcd</td>
+        </tr>
+    </table>
 </div>
+
+<div>
+    <table>
+        <tr>
+            <th>1</th>
+            <td>
+                <canvas @ref="srcCanvas1" width="256" height="256">
+                    Your browser does not support the HTML5 canvas tag.
+                </canvas>
+            </td>
+        </tr>
+        <tr>
+            <th>2</th>
+            <td>
+                <canvas @ref="srcCanvas2" width="256" height="256">
+                    Your browser does not support the HTML5 canvas tag.
+                </canvas>
+            </td>
+        </tr>
+        <tr>
+            <th>3</th>
+            <td>
+                <canvas @ref="srcCanvas3" width="256" height="256">
+                    Your browser does not support the HTML5 canvas tag.
+                </canvas>
+
+            </td>
+        </tr>
+        <tr>
+            <th>4</th>
+            <td>
+                <canvas @ref="srcCanvas4" width="256" height="256">
+                    Your browser does not support the HTML5 canvas tag.
+                </canvas>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<p>*1: スプリットを使って採点を行います．スプリットを使った点数の計算については
+    <a href="https://texas4-h.tamu.edu/wp-content/uploads/2015/09/photo_judging_contest_reasons2.pdf" target="_blank">ここ</a> 
+    を参照してみてください．一応この通り採点できるように組んであります．
+スプリットの決め方は適当ですが，一応，見た目の差異が大きいところを大きいスプリットに，小さいところを小さいスプリットにしてます．見た目に大きい差がないところは点数差が生じにくい仕組みです．</p>
+
+<p>*2: データは順位付けの根拠となる値です．Areaは楕円の面積をピクセル単位で計算した結果を，BMSは口田先生の論文の結果を元に疑似的な面積比を用いて<a href = "https://github.com/takam1602/MeatGenerator" target ="_blank">線形回帰した結果</a>を,BCSは格付け協会のカラースタンダートから適当に作ったRGB値の線形回帰式で推定した結果を，それぞれ示しています．それなりの値かと思います．
+</p>
 
 @code {
     private Mat? srcMat;
@@ -53,12 +108,31 @@
     private CanvasClient? srcCanvasClient3;
     private CanvasClient? srcCanvasClient4;
 
-    private string bms = "BMS: ";
-    private string bmsd = "Data: ";
-    private string size = "Area: ";
-    private string sized = "Data: ";
-    private string mc ="Meat Color";
-    private string mcd ="Data";
+    private string bms = "";
+    private string bmsd = " ";
+    private string size = " ";
+    private string sized = " ";
+    private string mc = "";
+    private string mcd = "";
+
+    private string areaAns = "";
+    private string bmsAns = "";
+    private string mcAns = "";
+
+    private string areaScore = "";
+    private string bmsScore = "";
+    private string mcScore = "";
+
+    private List<int> areaSc = new();
+    private List<int> bmsSc = new();
+    private List<int> mcSc = new();
+    private List<int> areaAnsSc = new();
+    private List<int> bmsAnsSc = new();
+    private List<int> mcAnsSc = new();
+
+    private List<double> areaSplSc = new();
+    private List<double> bmsSplSc = new();
+    private List<double> mcSplSc = new();
 
     List<Meat> result = new();
 
@@ -77,17 +151,20 @@
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         await base.OnAfterRenderAsync(firstRender);
-        //await this.NextImage();
     }
 
     private async Task NextImage()
     {
-        this.bms  = "BMS:          ";
-        this.bmsd  = "Data:          ";
-        this.size = "Area:         ";
-        this.sized = "Data:         ";
-        this.mc   = "Meat Color:   ";
-        this.mcd   = "Data:   ";
+        this.bms = "";
+        this.bmsd = "";
+        this.size = "";
+        this.sized = "";
+        this.mc = "";
+        this.mcd = "";
+
+        this.areaScore = "";
+        this.bmsScore = "";
+        this.mcScore = "";
 
         result.Clear();
 
@@ -115,37 +192,61 @@
 
     private void ShowAnswer()
     {
-        this.bms  = "BMS:          ";
-        this.bmsd  = "Data:          ";
-        this.size = "Area:         ";
-        this.sized = "Data:         ";
-        this.mc   = "Meat Color:   ";
-        this.mcd   = "Data:   ";
+        this.bms = "";
+        this.bmsd = "";
+        this.size = "";
+        this.sized = "";
+        this.mc = "";
+        this.mcd = "";
+        this.areaScore = "";
+        this.bmsScore = "";
+        this.mcScore = "";
+
+        areaSc.Clear();
+        bmsSc.Clear();
+        mcSc.Clear();
+
+        areaAnsSc.Clear();
+        bmsAnsSc.Clear();
+        mcAnsSc.Clear();
+
+        areaSplSc.Clear();
+        bmsSplSc.Clear();
+        mcSplSc.Clear();
+
+        int c = 0;
 
         var ar = result.OrderByDescending(r => r.Area);
-        int c = 0;
         foreach (var a in ar)
         {
+            areaAnsSc.Add((int)(a.Key));
             this.size += a.Key;
-            this.sized+= (int)(a.Area);
+            var ans = Math.Round(a.Area / 10000, 1, MidpointRounding.AwayFromZero);
+            areaSplSc.Add(a.Area);
+            this.sized += ans;
+
             if (c < result.Count - 1)
             {
-                this.size += " > ";
-                this.sized += " > ";
+                this.size += " - ";
+                this.sized += " - ";
             }
             c++;
         }
+        this.sized += "";
         c = 0;
 
         var bm = result.OrderByDescending(r => r.BMS);
         foreach (var a in bm)
         {
+            bmsAnsSc.Add((int)(a.Key));
             this.bms += a.Key;
-            this.bmsd += (int)(a.BMS);
+            var ans = (int)(a.BMS);
+            this.bmsd += ans;
+            bmsSplSc.Add(a.BMS);
             if (c < result.Count - 1)
             {
-                this.bms += " > ";
-                this.bmsd += ">";
+                this.bms += " - ";
+                this.bmsd += " - ";
             }
             c++;
         }
@@ -154,14 +255,201 @@
         var m = result.OrderBy(r => r.MeatColor);
         foreach (var a in m)
         {
+            mcAnsSc.Add((int)(a.Key));
             this.mc += a.Key;
-            this.mcd += (int)(a.MeatColor);
-            if (c < result.Count-1)
+            var ans =
+            (int)(a.MeatColor);
+            this.mcd += ans;
+            mcSplSc.Add(a.MeatColor);
+            if (c < result.Count - 1)
             {
-                this.mc += " > ";
-                this.mcd += " > ";
+                this.mc += " - ";
+                this.mcd += " - ";
             }
             c++;
         }
+
+        if (areaAns.Length < 1 || bmsAns.Length < 1 || mcAns.Length < 1)
+        {
+            areaScore = "";
+            bmsScore = "";
+            mcScore = "";
+            return;
+        }
+        int aS = Convert.ToInt32(areaAns);
+        int bS = Convert.ToInt32(bmsAns);
+        int mS = Convert.ToInt32(mcAns);
+
+        var areaSplit = this.SplitList(areaSplSc);
+        var bmsSplit = this.SplitList(bmsSplSc);
+        var mcSplit = this.SplitList(mcSplSc);
+
+        while (0 < aS)
+        {
+            var a = (int)(aS % 10);
+            areaSc.Add(a);
+            aS = (int)(aS / 10);
+        }
+        if (areaSc.Count < 1 || areaSc.Count > 4 || this.isListValueOverlap(areaSc))
+        {
+            areaScore = "";
+            bmsScore = "";
+            mcScore = "";
+            return;
+        }
+        areaSc.Reverse();
+
+        while (0 < bS)
+        {
+            var a = (int)(bS % 10);
+            bmsSc.Add(a);
+            bS = (int)(bS / 10);
+        }
+
+        if (bmsSc.Count < 1 || bmsSc.Count > 4 || this.isListValueOverlap(areaSc))
+        {
+            areaScore = "";
+            bmsScore = "";
+            mcScore = "";
+            return;
+        }
+
+        bmsSc.Reverse();
+        while (0 < mS)
+        {
+            var a = (int)(mS % 10);
+            mcSc.Add(a);
+            mS = (int)(mS / 10);
+        }
+
+        if (mcSc.Count < 1 || mcSc.Count > 4 || this.isListValueOverlap(areaSc))
+            return;
+        mcSc.Reverse();
+
+        string asplit = "";
+        string bsplit = "";
+        string csplit = "";
+
+        c = 0;
+        foreach (var k in areaSplit)
+        {
+            asplit += k.ToString();
+            if (c < areaSplit.Count - 1)
+            {
+                asplit += "-";
+            }
+            c++;
+        }
+
+        c = 0;
+        foreach (var k in bmsSplit)
+        {
+            bsplit += k.ToString();
+            if (c < bmsSplit.Count - 1)
+            {
+                bsplit += "-";
+            }
+            c++;
+        }
+
+        c = 0;
+        foreach (var k in mcSplit)
+        {
+            csplit += k.ToString();
+            if (c < mcSplit.Count - 1)
+            {
+                csplit += "-";
+            }
+            c++;
+
+        }
+
+        this.size += ":(" + asplit + ")";
+        this.bms += ":(" + bsplit + ")";
+        this.mc += ":(" + csplit + ")";
+
+        areaScore = (50 - SplitCompare(areaSc, areaAnsSc, areaSplit)).ToString();
+        bmsScore = (50 - SplitCompare(bmsSc, bmsAnsSc, bmsSplit)).ToString();
+        mcScore = (50 - SplitCompare(mcSc, mcAnsSc, mcSplit)).ToString();
+    }
+
+    private List<int> SplitList(List<double> data)
+    {
+        int score = 10;
+        List<int> Ans = new();
+
+        double d0 = data[0] - data[1];
+        double d1 = data[1] - data[2];
+        double d2 = data[2] - data[3];
+
+        double sum = d0 + d1 + d2;
+
+        var k1 = (int)(score * d2 / sum);
+        if (k1 < 1) k1 = 1;
+        Ans.Add(k1);
+
+        var k2 = (int)(score * d1 / sum);
+        if (k2 < 1) k2 = 1;
+        Ans.Add(k2);
+
+        var k3 = (int)(score * d0 / sum);
+        if (k3 < 1) k3 = 1;
+        Ans.Add(k3);
+
+        Ans.Reverse();
+
+        return Ans;
+
+    }
+
+    private int SplitCompare(List<int> User, List<int> Ans, List<int> Split)
+    {
+        int ans = 0;
+        List<int> UserPlace = new();
+
+        for (int i = 0; i < User.Count; i++)
+        {
+            for (int j = 0; j < Ans.Count; j++)
+            {
+                if (User[i] == Ans[j])
+                {
+                    UserPlace.Add(j);
+                    break;
+                }
+            }
+        }
+
+        for (int i = 0; i < User.Count; i++)
+        {
+            for (int j = i + 1; j < UserPlace.Count; j++)
+            {
+                var a1 = UserPlace[i] - UserPlace[j];
+
+                if (a1 > 0)
+                {
+                    var l = UserPlace[i];
+                    var k = UserPlace[j];
+                    for (int m = k; m < l; m++)
+                    {
+                        ans += Split[m];
+                    }
+                }
+            }
+        }
+        return ans;
+    }
+    private bool isListValueOverlap(List<int> list)
+    {
+        List<int> reserveList = list;
+        
+        for (int i=0;i<list.Count;i++)
+        {
+            for (int j = i + 1; j < reserveList.Count; j++)
+            {
+                if(list[i]==reserveList[j])
+                    return true;
+            }
+        }
+        return false;
     }
 }
