@@ -59,5 +59,5 @@ x = (y+7.184)/4.418
 
 ## 支えていただいているツール
 - [ASP.NET](https://dotnet.microsoft.com/en-us/apps/aspnet)
-- [shimatさんのOpenCvShapr](https://github.com/shimat/opencvsharp)
+- [shimatさんのOpenCvSha](https://github.com/shimat/opencvsharp)
 - [firebase](https://firebase.google.com/)
