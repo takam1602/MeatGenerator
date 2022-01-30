@@ -1,0 +1,61 @@
+﻿@page "/carcaseGenerator"
+@using OpenCvSharp
+@using Microsoft.AspNetCore.Components.Web
+@using JapaneseIcmj
+@inject IJSRuntime jsRuntime;
+@inject HttpClient httpClient;
+@implements IDisposable
+
+<PageTitle>Carcase Generator v0.1</PageTitle>
+
+<h1>
+    Carcase Generator v0.1
+</h1>
+<h2>疑似枝肉画像をランダムに生成します(開発中)</h2>
+<p>Nextボタンを押して画像を表示します．
+    <a href="http://www.initmedia.net.au/icmj/guide2013/Init_train_f8_v1.html" target="_blank">Australian ICMJ</a>
+    のオンライントレーニング画像を使用し，学習しました．
+    </p>
+    <p>枝肉画像を学習したデータを使用して，ランダムにそれっぽい画像を造っています．難易度激ムズなので後で調整します．</p>
+
+<div>
+    <button @onclick="@(async () => await NextImage())">Generate</button>
+</div>
+
+<canvas @ref="srcCanvas1" width="640" height="480">
+    Your browser does not support the HTML5 canvas tag.
+</canvas>
+
+@code {
+    private Mat? srcMat;
+    private ElementReference srcCanvas1;
+    private CanvasClient? srcCanvasClient1;
+
+    private CarcaseGenerator gen = new();
+
+    public void Dispose()
+    {
+        srcMat?.Dispose();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    private async Task NextImage()
+    {
+        srcCanvasClient1 ??= new CanvasClient(jsRuntime, srcCanvas1);
+        string jsonSrc = "json/carcaseData.json";
+        var n = await httpClient.GetFromJsonAsync<List<KmtPoint>>(jsonSrc);
+
+        srcMat = gen.GenerateCarcase(1,n);
+        await srcCanvasClient1.DrawMatAsync(srcMat);
+    }
+}
+
