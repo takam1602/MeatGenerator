@@ -6,17 +6,17 @@
 @inject HttpClient httpClient;
 @implements IDisposable
 
-<PageTitle>Carcase Generator v0.5</PageTitle>
+<PageTitle>Psuedo Carcase Generator v1.0</PageTitle>
 
 <h1>
-    Carcase Generator v0.5
+    Psuedo Carcase Generator v1.0
 </h1>
-<h2>疑似枝肉画像をランダムに生成します(開発中)</h2>
-<p>Nextボタンを押して画像を表示します．
+<h2>疑似枝肉画像をランダムに生成します</h2>
+<p>Generateボタンを押して画像を表示します．
     <a href="http://www.initmedia.net.au/icmj/guide2013/Init_train_f8_v1.html" target="_blank">Australian ICMJ</a>
-    のオンライントレーニング画像を使用し，学習しました．
+    のオンライントレーニング画像を学習させていただきました．
     </p>
-    <p>枝肉画像を学習したデータを使用して，ランダムにそれっぽい画像を造っています．難易度激ムズなので後で調整します．</p>
+    <p>もも(Butt)，ロイン(Loin)，かた(Chuck)の厚みを,左から厚い順に並べてください．Answerボタンを押すと回答が表示されます．緑線は上からもも，ロイン，かたの厚みを，プログラムが測定した部分です．</p>
 
 <div>
     <button @onclick="@(async () => await NextImage())">Generate</button>
@@ -28,8 +28,8 @@
             <th></th>
             <td>回答</td>
             <td>得点(/50点)</td>
-            <td>順位(スプリット) *1</td>
-            <td>データ *2</td>
+            <td>順位(スプリット)</td>
+            <td>データ *1</td>
         </tr>
         <tr>
             <th>Butt</th>
@@ -54,35 +54,32 @@
         </tr>
     </table>
 </div>
+
 <div>
     <table>
         <tr>
             <th>1</th>
+            <th>2</th>
+            <th>3</th>
+            <th>4</th>
+        </tr>
+        <tr>
             <td>
                 <canvas @ref="srcCanvas1" width="160" height="480">
                     Your browser does not support the HTML5 canvas tag.
                 </canvas>
             </td>
-        </tr>
-        <tr>
-            <th>2</th>
             <td>
                 <canvas @ref="srcCanvas2" width="160" height="480">
                     Your browser does not support the HTML5 canvas tag.
                 </canvas>
             </td>
-        </tr>
-        <tr>
-            <th>3</th>
             <td>
                 <canvas @ref="srcCanvas3" width="160" height="480">
                     Your browser does not support the HTML5 canvas tag.
                 </canvas>
 
             </td>
-        </tr>
-        <tr>
-            <th>4</th>
             <td>
                 <canvas @ref="srcCanvas4" width="160" height="480">
                     Your browser does not support the HTML5 canvas tag.
@@ -91,6 +88,11 @@
         </tr>
     </table>
 </div>
+<p>*1: データは順位付けの根拠となる値です．
+    緑線の位置で計測した枝肉の幅，をピクセル単位で計測しています．
+    計測する場所が違う，というご指摘はご容赦ください．
+</p>
+
 
 @code {
     private Mat? srcMat;

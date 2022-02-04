@@ -2,27 +2,29 @@
 @using OpenCvSharp
 @inject IJSRuntime jsRuntime;
 
-<PageTitle>Meat Generatorのページ</PageTitle>
-<a href="meatGenerator">
-    <h1>Meat Generator </h1>
-</a>
+<PageTitle>Meat Generator　2.0 </PageTitle>
+    
+<h1>Meat Generator 2.0</h1>
 
 <p>
-    疑似的に枝肉切開面のロース芯画像を生成します．
+    ジャッジングの練習用に，
+    <a href="/meatGenerator" target="_blank">
+    疑似ロース芯画像
+    </a>
+    や
+    <a href="/carcaseGenerator" target="_blank">
+    枝肉画像
+    </a>
+    を生成します．
 </p>
 
 <h2>How to use</h2>
 <p>
-    Nextボタンを押して画像を生成，Answerボタンで答えを表示します．
-
+    Generateボタンを押して問題をつくり，観察して自分の答えを入力し，Answerボタンで答えを確認します．
 </p>
 
 <p>
-    自分の回答を入力し，採点できる機能を付けました．
-</p>
-
-<p>
-    ジャッジングの自主練にどうぞ．
+    ロース芯画像がフィルター処理で，枝肉画像は学習データから推定した正規分布から，「それっぽい」画像の出力を追求しています．
 </p>
 
 <h2>困ったら</h2>
