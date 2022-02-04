@@ -37,7 +37,7 @@ for (int kj = 1; kj < 11; kj++)
     Point[][] contours;
     HierarchyIndex[] hierarchyIndexes;
     mat.FindContours(out contours, out hierarchyIndexes, RetrievalModes.List, ContourApproximationModes.ApproxNone);
-
+    
     //小さいor大きい輪郭除去
     var reContours = contours.Where(x => x.Count() > 100 && x.Count() < 1500).ToArray();
 
@@ -132,10 +132,10 @@ var statStdDevList = statList.Select(lists =>
 
 Console.WriteLine("statAverageList" + statStdDevList.Count);
 
-List<List<Point>> pracList = new List<List<Point>>();
 
 for (int j = 0; j < 4; j++)
 {
+    List<List<Point>> pracList = new List<List<Point>>();
     List<Point> psudoList = new List<Point>();
     int par = rnd.Next(0, 301);
     int par2 = rnd.Next(0, 7);
@@ -150,18 +150,18 @@ for (int j = 0; j < 4; j++)
 
         var y = avg.Item1.Y;
 
-        psudoList.Add(new Point((150 * j) + lowX, y));
-        psudoList.Add(new Point((150 * j) + highX, y));
+        psudoList.Add(new Point(lowX, y));
+        psudoList.Add(new Point(highX, y));
     }
+
     pracList.Add(psudoList);
+    var m = new Mat(new Size(160, 480), MatType.CV_8UC3, Scalar.White);
+    m.DrawContours(pracList, -1, Scalar.Pink, 1);
+    Cv2.MedianBlur(m,m, 17);
+    Cv2.ImShow("draw", m);
+    Cv2.WaitKey();
 }
 
-
-Mat? newMat = new Mat(new Size(640, 480), MatType.CV_8UC3, Scalar.Black);
-newMat.DrawContours(pracList, -1, Scalar.Pink, 1);
-Cv2.MedianBlur(newMat, newMat, 17);
-Cv2.ImShow("draw", newMat);
-Cv2.WaitKey();
 
 //結果をjsonで保存？
 public class KmtPoint

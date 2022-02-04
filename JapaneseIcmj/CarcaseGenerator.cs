@@ -37,7 +37,7 @@ namespace JapaneseIcmj
     {
         public Carcase CarcaseData { get; private set; } = new();
 
-        public Mat GenerateCarcase(int key,List<KmtPoint>? list)
+        public Mat GenerateCarcase(int key, List<KmtPoint>? list)
         {
             //Getstatistic data from json, learned by Australian ICMJ
             //list is it
@@ -49,7 +49,7 @@ namespace JapaneseIcmj
             var orderedList = list?.Select(p => new Point(p.X, p.Y)).OrderBy(p => p.Y).ToList();
 
             List<List<Point>> xClass = new List<List<Point>>();
-            
+
             //x
             for (int k = 0; k < orderedList?.Count - 2; k++)
             {
@@ -85,17 +85,17 @@ namespace JapaneseIcmj
                 }
                 statList.Add((left, right));
             }
-            
-            
+
+
             var statAverageList = statList.Select(lists =>
             {
                 var avgLx = lists.Left.Average(d => (double)d.X);
                 var avgLy = lists.Left.Average(d => (double)d.Y);
                 var avgRx = lists.Right.Average(d => (double)d.X);
                 var avgRy = lists.Right.Average(d => (double)d.Y);
-                return (new Point(avgLx, avgLy),new Point(avgRx, avgRy));
+                return (new Point(avgLx, avgLy), new Point(avgRx, avgRy));
             }).ToList();
-            
+
             var statStdDevList = statList.Select(lists =>
             {
                 var lx = lists.Left.Select(d => (double)d.X).StandardDeviation();
@@ -103,41 +103,35 @@ namespace JapaneseIcmj
                 var rx = lists.Right.Select(d => (double)d.X).StandardDeviation();
                 var ry = lists.Right.Select(d => (double)d.Y).StandardDeviation();
 
-                return (new Point(lx, ly),new Point(rx, ry));
+                return (new Point(lx, ly), new Point(rx, ry));
             }).ToList();
 
-            Console.WriteLine("statAverageList"+statStdDevList.Count);
+            Console.WriteLine("statAverageList" + statStdDevList.Count);
 
             List<List<Point>> pracList = new List<List<Point>>();
 
             for (int j = 0; j < 4; j++)
             {
                 List<Point> psudoList = new List<Point>();
-                int par = rnd.Next(0,31);
+                int par = rnd.Next(0, 301);
+                int par2 = rnd.Next(0, 7);
 
                 for (int i = 0; i < statList.Count; i++)
                 {
                     var sd = statStdDevList[i];
                     var avg = statAverageList[i];
 
-                    //var l = statList[i];
+                    var lowX = avg.Item1.X - (sd.Item1.X * par / 100) - par2;
+                    var highX = avg.Item2.X + (sd.Item2.X * par / 100) - par2;
 
-                    //int lowC = rnd.Next(0, l.Left.Count() - 1);
-                    //int highC = rnd.Next(0, l.Right.Count() - 1);
-
-                    //var lowX = l.Left[lowC].X;
-                    //var highX = l.Right[highC].X;
-                    var lowX = avg.Item1.X - (sd.Item1.X* par/10);
-                    var highX = avg.Item2.X +(sd.Item2.X* par/10);
-
-                    var y = sd.Item1.Y;
+                    var y = avg.Item1.Y;
 
                     psudoList.Add(new Point((150 * j) + lowX, y));
                     psudoList.Add(new Point((150 * j) + highX, y));
                 }
                 pracList.Add(psudoList);
             }
-
+            
             Mat? newMat = new Mat(new Size(640, 480), MatType.CV_8UC3, Scalar.White);
             newMat.DrawContours(pracList, -1, Scalar.Red, 1);
             Cv2.MedianBlur(newMat, newMat, 17);
