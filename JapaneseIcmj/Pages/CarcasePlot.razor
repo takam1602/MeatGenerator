@@ -20,18 +20,121 @@
 
 <div>
     <button @onclick="@(async () => await NextImage())">Generate</button>
+    <button @onclick="@(async ()=> await ShowAnswer())">Answer</button>
 </div>
+<div>
+    <table>
+        <tr>
+            <th></th>
+            <td>回答</td>
+            <td>得点(/50点)</td>
+            <td>順位(スプリット) *1</td>
+            <td>データ *2</td>
+        </tr>
+        <tr>
+            <th>Butt</th>
+            <td><input id="butt" type="number" max="4321" @bind="@buttAns" /><br /></td>
+            <td>@buttScore　</td>
+            <td>@butt</td>
+            <td>@buttd</td>
+        </tr>
+        <tr>
+            <th>Loin</th>
+            <td><input id="loin" type="number" max="4321" @bind="@loinAns" /><br /></td>
+            <td>@loinScore</td>
+            <td>@loin</td>
+            <td>@loind</td>
+        </tr>
+        <tr>
+            <th>Chuck</th>
+            <td><input id="chuck" type="number" max="4321" @bind="@chuckAns" /><br /></td>
+            <td>@chuckScore</td>
+            <td>@chuck</td>
+            <td>@chuckd</td>
+        </tr>
+    </table>
+</div>
+<div>
+    <table>
+        <tr>
+            <th>1</th>
+            <td>
+                <canvas @ref="srcCanvas1" width="160" height="480">
+                    Your browser does not support the HTML5 canvas tag.
+                </canvas>
+            </td>
+        </tr>
+        <tr>
+            <th>2</th>
+            <td>
+                <canvas @ref="srcCanvas2" width="160" height="480">
+                    Your browser does not support the HTML5 canvas tag.
+                </canvas>
+            </td>
+        </tr>
+        <tr>
+            <th>3</th>
+            <td>
+                <canvas @ref="srcCanvas3" width="160" height="480">
+                    Your browser does not support the HTML5 canvas tag.
+                </canvas>
 
-<canvas @ref="srcCanvas1" width="640" height="480">
-    Your browser does not support the HTML5 canvas tag.
-</canvas>
+            </td>
+        </tr>
+        <tr>
+            <th>4</th>
+            <td>
+                <canvas @ref="srcCanvas4" width="160" height="480">
+                    Your browser does not support the HTML5 canvas tag.
+                </canvas>
+            </td>
+        </tr>
+    </table>
+</div>
 
 @code {
     private Mat? srcMat;
     private ElementReference srcCanvas1;
-    private CanvasClient? srcCanvasClient1;
+    private ElementReference srcCanvas2;
+    private ElementReference srcCanvas3;
+    private ElementReference srcCanvas4;
 
-    private CarcaseGenerator gen = new();
+    private CanvasClient? srcCanvasClient1;
+    private CanvasClient? srcCanvasClient2;
+    private CanvasClient? srcCanvasClient3;
+    private CanvasClient? srcCanvasClient4;
+
+    private string butt = "";
+    private string buttd = " ";
+    private string loin = " ";
+    private string loind = " ";
+    private string chuck = "";
+    private string chuckd = "";
+
+    private string buttAns = "";
+    private string loinAns = "";
+    private string chuckAns = "";
+
+    private string buttScore = "";
+    private string loinScore = "";
+    private string chuckScore = "";
+
+    private List<int> buttSc = new();
+    private List<int> loinSc = new();
+    private List<int> chuckSc = new();
+    private List<int> buttAnsSc = new();
+    private List<int> loinAnsSc = new();
+    private List<int> chuckAnsSc = new();
+
+    private List<double> buttSplSc = new();
+    private List<double> loinSplSc = new();
+    private List<double> chuckSplSc = new();
+
+    private CarcaseGenerator gen;
+
+    List<Carcase> result = new();
+    List<Mat> resultMats = new();
+    List<KmtPoint>? jsonData = new();
 
     public void Dispose()
     {
@@ -41,6 +144,9 @@
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
+        string jsonSrc = "json/carcaseData.json";
+        jsonData = await httpClient.GetFromJsonAsync<List<KmtPoint>>(jsonSrc);
+        gen = new CarcaseGenerator(jsonData);
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -50,12 +156,324 @@
 
     private async Task NextImage()
     {
-        srcCanvasClient1 ??= new CanvasClient(jsRuntime, srcCanvas1);
-        string jsonSrc = "json/carcaseData.json";
-        var n = await httpClient.GetFromJsonAsync<List<KmtPoint>>(jsonSrc);
+        this.butt = "";
+        this.buttd = "";
+        this.loin = "";
+        this.loind = "";
+        this.chuck = "";
+        this.chuckd = "";
 
-        srcMat = gen.GenerateCarcase(1,n);
-        await srcCanvasClient1.DrawMatAsync(srcMat);
+        this.buttScore = "";
+        this.loinScore = "";
+        this.chuckScore = "";
+
+        result.Clear();
+        resultMats.Clear();
+
+        srcCanvasClient1 ??= new CanvasClient(jsRuntime, srcCanvas1);
+        srcCanvasClient2 ??= new CanvasClient(jsRuntime, srcCanvas2);
+        srcCanvasClient3 ??= new CanvasClient(jsRuntime, srcCanvas3);
+        srcCanvasClient4 ??= new CanvasClient(jsRuntime, srcCanvas4);
+
+        var a  = gen.GenerateCarcaseSingle(1);
+        result.Add(a.result);
+        resultMats.Add(a.resultmat);
+        srcMat = a.mat;
+        await srcCanvasClient1.DrawMatAsync(a.mat);
+
+        var b  = gen.GenerateCarcaseSingle(2);
+        result.Add(b.result);
+        resultMats.Add(b.resultmat);
+        srcMat = b.mat;
+        await srcCanvasClient2.DrawMatAsync(b.mat);
+
+        var c  = gen.GenerateCarcaseSingle(3);
+        result.Add(c.result);
+        resultMats.Add(c.resultmat);
+        srcMat = c.mat;
+        await srcCanvasClient3.DrawMatAsync(c.mat); 
+
+        var d  = gen.GenerateCarcaseSingle(4);
+        result.Add(d.result);
+        resultMats.Add(d.resultmat);
+        srcMat = d.mat;
+        await srcCanvasClient4.DrawMatAsync(d.mat);
     }
+
+    private async Task ShowAnswer()
+    {
+        this.butt = "";
+        this.buttd = "";
+        this.loin = "";
+        this.loind = "";
+        this.chuck = "";
+        this.chuckd = "";
+        this.buttScore = "";
+        this.loinScore = "";
+        this.chuckScore = "";
+
+        buttSc.Clear();
+        loinSc.Clear();
+        chuckSc.Clear();
+
+        buttAnsSc.Clear();
+        loinAnsSc.Clear();
+        chuckAnsSc.Clear();
+
+        buttSplSc.Clear();
+        loinSplSc.Clear();
+        chuckSplSc.Clear();
+
+        srcCanvasClient1 ??= new CanvasClient(jsRuntime, srcCanvas1);
+        srcCanvasClient2 ??= new CanvasClient(jsRuntime, srcCanvas2);
+        srcCanvasClient3 ??= new CanvasClient(jsRuntime, srcCanvas3);
+        srcCanvasClient4 ??= new CanvasClient(jsRuntime, srcCanvas4);
+
+        await srcCanvasClient1.DrawMatAsync(resultMats[0]);
+        await srcCanvasClient2.DrawMatAsync(resultMats[1]);
+        await srcCanvasClient3.DrawMatAsync(resultMats[2]);
+        await srcCanvasClient4.DrawMatAsync(resultMats[3]);
+
+        int c = 0;
+
+        var ar = result.OrderByDescending(r => r.Butt);
+        foreach (var a in ar)
+        {
+            buttAnsSc.Add((int)(a.Key));
+            this.butt += a.Key;
+            var ans = (int)(a.Butt);
+            buttSplSc.Add(a.Butt);
+            this.buttd += ans;
+
+            if (c < result.Count - 1)
+            {
+                this.butt += " - ";
+                this.buttd += " - ";
+            }
+            c++;
+        }
+        this.buttd += "";
+        c = 0;
+
+        var bm = result.OrderByDescending(r => r.Loin);
+        foreach (var a in bm)
+        {
+            loinAnsSc.Add((int)(a.Key));
+            this.loin += a.Key;
+            var ans = (int)(a.Loin);
+            this.loind += ans;
+            loinSplSc.Add(a.Loin);
+            if (c < result.Count - 1)
+            {
+                this.loin += " - ";
+                this.loind += " - ";
+            }
+            c++;
+        }
+        c = 0;
+
+        var m = result.OrderByDescending(r => r.Chuck);
+        foreach (var a in m)
+        {
+            chuckAnsSc.Add((int)(a.Key));
+            this.chuck += a.Key;
+            var ans =
+            (int)(a.Chuck);
+            this.chuckd += ans;
+            chuckSplSc.Add(a.Chuck);
+            if (c < result.Count - 1)
+            {
+                this.chuck += " - ";
+                this.chuckd += " - ";
+            }
+            c++;
+        }
+
+        if (buttAns.Length < 1 || loinAns.Length < 1 || chuckAns.Length < 1)
+        {
+            buttScore = "";
+            loinScore = "";
+            chuckScore = "";
+            return;
+        }
+
+        int aS = Convert.ToInt32(buttAns);
+        int bS = Convert.ToInt32(loinAns);
+        int mS = Convert.ToInt32(chuckAns);
+
+        var buttSplit = this.SplitList(buttSplSc);
+        var loinSplit = this.SplitList(loinSplSc);
+        var chuckSplit = this.SplitList(chuckSplSc);
+
+        while (0 < aS)
+        {
+            var a = (int)(aS % 10);
+            buttSc.Add(a);
+            aS = (int)(aS / 10);
+        }
+        if (buttSc.Count < 1 || buttSc.Count > 4 || this.isListValueOverlap(buttSc))
+        {
+            buttScore = "";
+            loinScore = "";
+            chuckScore = "";
+            return;
+        }
+        buttSc.Reverse();
+
+        while (0 < bS)
+        {
+            var a = (int)(bS % 10);
+            loinSc.Add(a);
+            bS = (int)(bS / 10);
+        }
+
+        if (loinSc.Count < 1 || loinSc.Count > 4 || this.isListValueOverlap(loinSc))
+        {
+            buttScore = "";
+            loinScore = "";
+            chuckScore = "";
+            return;
+        }
+        
+        loinSc.Reverse();
+        
+        while (0 < mS)
+        {
+            var a = (int)(mS % 10);
+            chuckSc.Add(a);
+            mS = (int)(mS / 10);
+        }
+
+        if (chuckSc.Count < 1 || chuckSc.Count > 4 || this.isListValueOverlap(chuckSc))
+            return;
+        chuckSc.Reverse();
+
+        string asplit = "";
+        string bsplit = "";
+        string csplit = "";
+
+        c = 0;
+        foreach (var k in buttSplit)
+        {
+            asplit += k.ToString();
+            if (c < buttSplit.Count - 1)
+            {
+                asplit += "-";
+            }
+            c++;
+        }
+
+        c = 0;
+        foreach (var k in loinSplit)
+        {
+            bsplit += k.ToString();
+            if (c < loinSplit.Count - 1)
+            {
+                bsplit += "-";
+            }
+            c++;
+        }
+
+        c = 0;
+        foreach (var k in chuckSplit)
+        {
+            csplit += k.ToString();
+            if (c < chuckSplit.Count - 1)
+            {
+                csplit += "-";
+            }
+            c++;
+
+        }
+
+        this.butt += ":(" + asplit + ")";
+        this.loin += ":(" + bsplit + ")";
+        this.chuck += ":(" + csplit + ")";
+
+        buttScore = (50 - SplitCompare(buttSc, buttAnsSc, buttSplit)).ToString();
+        loinScore = (50 - SplitCompare(loinSc, loinAnsSc, loinSplit)).ToString();
+        chuckScore = (50 - SplitCompare(chuckSc, chuckAnsSc, chuckSplit)).ToString();
+    }
+
+    private List<int> SplitList(List<double> data)
+    {
+        int score = 10;
+        List<int> Ans = new();
+
+        double d0 = data[0] - data[1];
+        double d1 = data[1] - data[2];
+        double d2 = data[2] - data[3];
+
+        double sum = d0 + d1 + d2;
+
+        var k1 = (int)(score * d2 / sum);
+        if (k1 < 1) k1 = 1;
+        Ans.Add(k1);
+
+        var k2 = (int)(score * d1 / sum);
+        if (k2 < 1) k2 = 1;
+        Ans.Add(k2);
+
+        var k3 = (int)(score * d0 / sum);
+        if (k3 < 1) k3 = 1;
+        Ans.Add(k3);
+
+        Ans.Reverse();
+
+        return Ans;
+
+    }
+
+    private int SplitCompare(List<int> User, List<int> Ans, List<int> Split)
+    {
+        int ans = 0;
+        List<int> UserPlace = new();
+
+        for (int i = 0; i < User.Count; i++)
+        {
+            for (int j = 0; j < Ans.Count; j++)
+            {
+                if (User[i] == Ans[j])
+                {
+                    UserPlace.Add(j);
+                    break;
+                }
+            }
+        }
+
+        for (int i = 0; i < User.Count; i++)
+        {
+            for (int j = i + 1; j < UserPlace.Count; j++)
+            {
+                var a1 = UserPlace[i] - UserPlace[j];
+
+                if (a1 > 0)
+                {
+                    var l = UserPlace[i];
+                    var k = UserPlace[j];
+                    for (int m = k; m < l; m++)
+                    {
+                        ans += Split[m];
+                    }
+                }
+            }
+        }
+        return ans;
+    }
+    private bool isListValueOverlap(List<int> list)
+    {
+        List<int> reserveList = list;
+        
+        for (int i=0;i<list.Count;i++)
+        {
+            for (int j = i + 1; j < reserveList.Count; j++)
+            {
+                if(list[i]==reserveList[j])
+                    return true;
+            }
+        }
+        return false;
+    }
+
 }
 

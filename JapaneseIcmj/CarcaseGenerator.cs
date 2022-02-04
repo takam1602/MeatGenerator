@@ -31,26 +31,38 @@ namespace JapaneseIcmj
         {
             this.Key = k;
         }
+
+        public void SetButt(double bu)
+        {
+            Butt = bu;
+        }
+        public void SetLoin(double lo)
+        {
+            Loin = lo;
+        }
+        public void SetChuck(double cu)
+        {
+            Chuck = cu;
+        }
     }
 
     public class CarcaseGenerator
     {
         public Carcase CarcaseData { get; private set; } = new();
 
-        public Mat GenerateCarcase(int key, List<KmtPoint>? list)
+        public CarcaseGenerator()
         {
-            //Getstatistic data from json, learned by Australian ICMJ
-            //list is it
+        }
 
-            CarcaseData.SetKey(key);
+        private List<(List<Point> Left, List<Point> Right)> statList = new List<(List<Point>, List<Point>)>();
+        private List<(Point Left,Point Right )>statAverageList = new List<(Point,Point)>();
+        private List<(Point Left,Point Right )>statStdDevList = new List<(Point,Point)>();
 
-            var rnd = new Random();
-            List<(List<Point> Left, List<Point> Right)> statList = new List<(List<Point>, List<Point>)>();
+        public CarcaseGenerator(List<KmtPoint>? list)
+        {
             var orderedList = list?.Select(p => new Point(p.X, p.Y)).OrderBy(p => p.Y).ToList();
 
             List<List<Point>> xClass = new List<List<Point>>();
-
-            //x
             for (int k = 0; k < orderedList?.Count - 2; k++)
             {
                 List<Point> temp = new List<Point>();
@@ -87,7 +99,7 @@ namespace JapaneseIcmj
             }
 
 
-            var statAverageList = statList.Select(lists =>
+            statAverageList = statList.Select(lists =>
             {
                 var avgLx = lists.Left.Average(d => (double)d.X);
                 var avgLy = lists.Left.Average(d => (double)d.Y);
@@ -96,7 +108,7 @@ namespace JapaneseIcmj
                 return (new Point(avgLx, avgLy), new Point(avgRx, avgRy));
             }).ToList();
 
-            var statStdDevList = statList.Select(lists =>
+            statStdDevList = statList.Select(lists =>
             {
                 var lx = lists.Left.Select(d => (double)d.X).StandardDeviation();
                 var ly = lists.Left.Select(d => (double)d.Y).StandardDeviation();
@@ -105,37 +117,58 @@ namespace JapaneseIcmj
 
                 return (new Point(lx, ly), new Point(rx, ry));
             }).ToList();
-
-            Console.WriteLine("statAverageList" + statStdDevList.Count);
-
+        }
+        
+        public (Mat mat, Carcase result, Mat resultmat) GenerateCarcaseSingle(int key)
+        {
             List<List<Point>> pracList = new List<List<Point>>();
+            List<Point> psudoList = new List<Point>();
 
-            for (int j = 0; j < 4; j++)
+            Carcase carcase = new Carcase();
+            Random rnd2 = new Random();
+
+            int par = rnd2.Next(0, 301);
+            int par2 = rnd2.Next(0, 10);
+            var height = statList.Count;
+
+            for (int i = 0; i < statList.Count; i++)
             {
-                List<Point> psudoList = new List<Point>();
-                int par = rnd.Next(0, 301);
-                int par2 = rnd.Next(0, 7);
+                var sd = statStdDevList[i];
+                var avg = statAverageList[i];
 
-                for (int i = 0; i < statList.Count; i++)
-                {
-                    var sd = statStdDevList[i];
-                    var avg = statAverageList[i];
+                var lowX = avg.Item1.X - (sd.Item1.X * par / 100) - par2;
+                var highX = avg.Item2.X + (sd.Item2.X * par / 100) - par2;
 
-                    var lowX = avg.Item1.X - (sd.Item1.X * par / 100) - par2;
-                    var highX = avg.Item2.X + (sd.Item2.X * par / 100) - par2;
+                var y = avg.Item1.Y;
 
-                    var y = avg.Item1.Y;
+                if (y == (int)(height / 2))
+                    carcase.SetLoin((double)Math.Abs(lowX - highX));
 
-                    psudoList.Add(new Point((150 * j) + lowX, y));
-                    psudoList.Add(new Point((150 * j) + highX, y));
-                }
-                pracList.Add(psudoList);
+                psudoList.Add(new Point(lowX, y));
+                psudoList.Add(new Point(highX, y));
             }
-            
-            Mat? newMat = new Mat(new Size(640, 480), MatType.CV_8UC3, Scalar.White);
+            pracList.Add(psudoList);
+
+            var butR = psudoList.Where(d => d.Y < height / 2).OrderByDescending(d => d.X).FirstOrDefault();
+            var butL = psudoList[psudoList.IndexOf(butR)+1];
+
+            var chuckL = psudoList.Where(d => d.Y > height / 2).OrderBy(d => d.X).FirstOrDefault();
+            var chuckR = psudoList[psudoList.IndexOf(chuckL)+1];
+
+            carcase.SetButt((double)Math.Abs(butR.X - butL.X));
+            carcase.SetChuck((double)Math.Abs(chuckL.X - chuckR.X));
+            carcase.SetKey(key);
+
+            Mat? newMat = new Mat(new Size(160, 480), MatType.CV_8UC3, Scalar.Black);
             newMat.DrawContours(pracList, -1, Scalar.Red, 1);
             Cv2.MedianBlur(newMat, newMat, 17);
-            return newMat;
+
+            var ansMat = newMat.Clone();
+            Cv2.Line(ansMat, new Point(0, (int)chuckL.Y), new Point(newMat.Width, (int)chuckL.Y), Scalar.Green, 1);
+            Cv2.Line(ansMat, new Point(0, (int)butL.Y), new Point(newMat.Width, (int)butL.Y), Scalar.Green, 1);
+            Cv2.Line(ansMat, new Point(0, (int)height / 2), new Point(newMat.Width, (int)height / 2), Scalar.Green, 1);
+
+            return (newMat, carcase, ansMat);
         }
     }
 }

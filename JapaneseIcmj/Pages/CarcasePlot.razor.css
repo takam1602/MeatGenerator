@@ -12,3 +12,27 @@ h2 {
     font-family: Tahoma, Geneva, Verdana, sans-serif;
     font-size:12pt;
 }
+
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+    table th {
+        font-size: 12pt;
+        text-align: center;
+        border: 1px #000 solid;
+    }
+
+    table td {
+        border: 1px #000 solid;
+        text-align: center;
+        padding: 5px 0;
+        font-size: 12pt;
+    }
+input {
+    height:20pt;
+    width:60pt;
+}
+
