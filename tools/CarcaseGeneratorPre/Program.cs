@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using MathNet.Numerics.Statistics;
 
 Mat? _srcMat;
 var rnd = new Random();
@@ -12,7 +13,7 @@ string imgSrc = "images/" + b + ".bmp";
 List<Mat> CarcaseMat = new List<Mat>();
 
 //y座標当たりの横幅のリスト，ここからばらつかせて疑似画像を生成する．
-List<(List<Point> low, List<Point> high)> statList = new List<(List<Point>, List<Point>)>();
+List<(List<Point> Left, List<Point> Right)> statList = new List<(List<Point>, List<Point>)>();
 //List<Point> Distances = new List<Point>();
 //List<(int key,double x,double y)> Distances = new List<(int ,double,double)>();
 List<KmtPoint> Distances = new List<KmtPoint>();
@@ -43,36 +44,35 @@ for (int kj = 1; kj < 11; kj++)
     //それぞれのクラスでx座標の平均でソート
     reContours = reContours.OrderBy(k => k.Average(p => p.X)).ToArray();
 
-    //4つの枝肉画像，左側を基準にずらす
+    //4つの枝肉画像，左側を基準にずらすための中心x座標造り
     //4頭映ってることが前提
     var CenterList = reContours.Select(d => d.Average(p => p.X)).OrderBy(p => p).ToList();
 
     for (int i = 0; i < reContours.Count(); i++)
     {
-        //List<Point> tempList = new List<Point>();
-        //List<(int,double,double)> tempList = new List<(int,double,double)>();
         List<KmtPoint> tempList = new List<KmtPoint>();
 
         for (int j = 0; j < reContours[i].Count() - 1; j++)
         {
+            //4つの枝肉画像，左側を基準にずらす
             var x = reContours[i][j].X - CenterList[i] + CenterList[0];
             var y = reContours[i][j].Y;
-            tempList.Add(new KmtPoint(count,x, y));
+            tempList.Add(new KmtPoint(count, x, y));
             count++;
         }
         Distances.AddRange(tempList);
     }
 }
-   
+
 //json file に出力
+//出力は中心から左右にどれだけ離れているかを個体ごとに表現したリスト
 var json_str = JsonSerializer.Serialize(Distances);
 File.WriteAllText("carcaseData.json", json_str);
-   
-var desiriarise = File.ReadAllText("carcaseData.json");
 
+//jsonを読み込む   
+var desiriarise = File.ReadAllText("carcaseData.json");
 var jsonData = JsonSerializer.Deserialize<List<KmtPoint>>(desiriarise);
-//var orderedList = Distances.Select(p=>new Point(p.X,p.Y)).OrderBy(p => p.Y).ToList();
-var orderedList = jsonData?.Select(p=>new Point(p.X,p.Y)).OrderBy(p => p.Y).ToList();
+var orderedList = jsonData?.Select(p => new Point(p.X, p.Y)).OrderBy(p => p.Y).ToList();
 
 List<List<Point>> xClass = new List<List<Point>>();
 
@@ -111,33 +111,51 @@ for (int i = 0; i < xClass.Count; i++)
     statList.Add((low, high));
 }
 
+var statAverageList = statList.Select(lists =>
+{
+    var avgLx = lists.Left.Average(d => (double)d.X);
+    var avgLy = lists.Left.Average(d => (double)d.Y);
+    var avgRx = lists.Right.Average(d => (double)d.X);
+    var avgRy = lists.Right.Average(d => (double)d.Y);
+    return (new Point(avgLx, avgLy), new Point(avgRx, avgRy));
+}).ToList();
+
+var statStdDevList = statList.Select(lists =>
+{
+    var lx = lists.Left.Select(d => (double)d.X).StandardDeviation();
+    var ly = lists.Left.Select(d => (double)d.Y).StandardDeviation();
+    var rx = lists.Right.Select(d => (double)d.X).StandardDeviation();
+    var ry = lists.Right.Select(d => (double)d.Y).StandardDeviation();
+
+    return (new Point(lx, ly), new Point(rx, ry));
+}).ToList();
+
+Console.WriteLine("statAverageList" + statStdDevList.Count);
+
 List<List<Point>> pracList = new List<List<Point>>();
 
 for (int j = 0; j < 4; j++)
 {
     List<Point> psudoList = new List<Point>();
+    int par = rnd.Next(0, 301);
+    int par2 = rnd.Next(0, 7);
+
     for (int i = 0; i < statList.Count; i++)
     {
-        var l = statList[i];
-        
-        int lowC  = rnd.Next(0,l.low.Count()-1);
-        int highC  = rnd.Next(0,l.high.Count()-1);
+        var sd = statStdDevList[i];
+        var avg = statAverageList[i];
 
-        //一様分布から取ると差がでにくい
-        //var lowX = rnd.Next(l.low.Min(p => p.X), l.low.Max(p => p.X));
-        //var highX = rnd.Next(l.high.Min(p => p.X), l.high.Max(p => p.X));
+        var lowX = avg.Item1.X -(sd.Item1.X * par / 100)-par2;
+        var highX = avg.Item2.X + (sd.Item2.X * par / 100)-par2;
 
-        //ので頻度を考慮した実際の値から取得
-        var lowX = l.low[lowC].X;
-        var highX = l.high[highC].X;
+        var y = avg.Item1.Y;
 
-        var y = l.high.Min(p => p.Y);
-
-        psudoList.Add(new Point(150 * j + lowX, y));
-        psudoList.Add(new Point(150 * j + highX, y));
+        psudoList.Add(new Point((150 * j) + lowX, y));
+        psudoList.Add(new Point((150 * j) + highX, y));
     }
     pracList.Add(psudoList);
 }
+
 
 Mat? newMat = new Mat(new Size(640, 480), MatType.CV_8UC3, Scalar.Black);
 newMat.DrawContours(pracList, -1, Scalar.Pink, 1);
@@ -148,8 +166,8 @@ Cv2.WaitKey();
 //結果をjsonで保存？
 public class KmtPoint
 {
-	public int Id { get;private  set; }
-	public double X { get; private set; }
+    public int Id { get; private set; }
+    public double X { get; private set; }
     public double Y { get; private set; }
 
     public KmtPoint(int id, double x, double y)

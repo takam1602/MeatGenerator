@@ -73,7 +73,7 @@ namespace JapaneseIcmj
             foreach (var r in result)
             {
                 if(r.size%2 ==0)
-                    Cv2.Ellipse(meat,new RotatedRect(new Point2f(r.position.X,r.position.Y),new Size2f(3*r.size,1*r.size),0),fc,-1);
+                    Cv2.Ellipse(meat,new RotatedRect(new Point2f(r.position.X,r.position.Y),new Size2f(3*r.size,r.size),0),fc,-1);
                 else 
                     Cv2.Circle(meat,r.position,r.size,fc,-1,LineTypes.AntiAlias);
             }
@@ -81,9 +81,9 @@ namespace JapaneseIcmj
             MeatData.SetArea(shaft.a,shaft.b);
             MeatData.SetBms(result);
 
-            using var mama = new Mat();
-            Cv2.MedianBlur(meat,mama,7);
-            mama.CopyTo(dstMat);
+            Cv2.MedianBlur(meat,meat,7);
+
+            meat.CopyTo(dstMat);
             return dstMat; 
         }
 
@@ -117,7 +117,7 @@ namespace JapaneseIcmj
         private List<(Point position,int size)> MarblingPositoinAndSize(int a,int b)
         {
             var rnd = new Random();
-            var numOfMarbling = rnd.Next(499,799);
+            var numOfMarbling = rnd.Next(499,999);
             List<(Point position,int size)> points = new List<(Point,int)>();
 
             for (var i = 0; i < numOfMarbling; i++)
