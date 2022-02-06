@@ -11,8 +11,20 @@
 
 <PageTitle>Retail vs Primal</PageTitle>
 
-<h1>(仮)部分肉と精肉でクイズしたい</h1>
-<p>ラベルとかの黒い文字を消去して，お肉だけの状態にしてみたかったのですが計算量の制約に勝てず，アルゴリズムが不十分できれいに消せていません．そもそも，下に表示される正解の画像（処理前）から答えがわかるかというとわかりにくいので，ラベリングなどしてあげる必要があるかもしれません．</p>
+<h1>Retail or Primal Cut Viewer V0.1 (test)</h1>
+
+<p>
+    精肉や部分肉の画像 *1 を表示します．
+    問題の画像はラベル文字を消去した画像で，正解は処理前の画像です．
+</p>
+
+<p>...としたかったのですが，アルゴリズムが不十分できれいに消せていません．そもそも，正解の画像から答えが読み取れないものが多いです．改善中です．
+    </p>
+
+<div>
+    <button @onclick="@(async () => await Next())">Next</button>
+    <button @onclick="@(async () => await Answer())">Answer</button>
+</div>
 
 <div>
     <canvas @ref="srcCanvas" width="640" height="480" style="border:1px solid gray;">
@@ -22,11 +34,7 @@
         Your browser does not support the HTML5 canvas tag.
     </canvas>
 </div>
-<div>
-    <button @onclick="@(async () => await Next())">Next</button>
-    <button @onclick="@(async () => await Answer())">Answer</button>
-</div>
-
+<p>Mihae 写真コレクションから写真をお借りしています．</p>
 @code {
     private Mat? srcMat;
     private ElementReference srcCanvas;
@@ -55,7 +63,7 @@
     {
         var rnd = new Random();
         var b = rnd.Next(0, 255);
-        string imgSrc = "images/"+b+".bmp";
+        string imgSrc = "images/" + b + ".bmp";
 
         var s = await httpClient.GetByteArrayAsync(imgSrc);
         var n = Convert.ToBase64String(s);
@@ -75,10 +83,7 @@
 
         var grayMat = conv.BGR2Gray(smat);
         Mat dstMat = new();
-        //Cv2.EqualizeHist(grayMat,dstMat);
-        //var biMat = conv.OhtsuBinary(dstMat);
 
-        //var reMat = conv.ResizeNearest(biMat, 480, 640);
         srcMat = conv.ResizeNearest(smat, 480, 640);
         dstMat = conv.Black2White(smat, 40, 150);
         dstMat = conv.ResizeNearest(dstMat, 480, 640);

@@ -125,10 +125,12 @@ namespace JapaneseIcmj
             List<Point> psudoList = new List<Point>();
 
             Carcase carcase = new Carcase();
+            
             Random rnd2 = new Random();
-
+            
             int par = rnd2.Next(0, 301);
             int par2 = rnd2.Next(0, 10);
+            
             var height = statList.Count;
 
             for (int i = 0; i < statList.Count; i++)
@@ -147,6 +149,7 @@ namespace JapaneseIcmj
                 psudoList.Add(new Point(lowX, y));
                 psudoList.Add(new Point(highX, y));
             }
+
             pracList.Add(psudoList);
 
             var butR = psudoList.Where(d => d.Y < height / 2).OrderByDescending(d => d.X).FirstOrDefault();
