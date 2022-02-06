@@ -89,7 +89,7 @@ x = (y+7.184)/4.418
 高さ方向の標準化は処理していなかったので，書いたコードだともっとも高さのある枝肉の高さに統一されるものになってしまいましたが重要なのは幅なので高さの情報は無視しました．
 
 学習結果のデータJson形式で
-[carcaseData.json](JapanseIcmj/wwwroot/json/carcaseData.json)
+[carcaseData.json](JapaneseIcmj/wwwroot/json/carcaseData.json)
 の通りですが，学習データというたいそうなものではなく，処理した輪郭座標の集まり，ということになります．
 
 
