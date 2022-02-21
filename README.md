@@ -3,7 +3,7 @@
 - 疑似ロース芯画像ジェネレータ
 - 疑似エダニク画像ジェネレータ
 
-## 新しい機能
+## 機能
 エダニク画像を表示できるようにしてみました．
 [Meat Generator V3.0](https://japanicmj-meatgenerator.firebaseapp.com/)
 
@@ -112,3 +112,6 @@ $$3\sigma$$
 - [ASP.NET](https://dotnet.microsoft.com/en-us/apps/aspnet)
 - [shimatさんのOpenCvSharp](https://github.com/shimat/opencvsharp)
 - [firebase](https://firebase.google.com/)
+
+# 作成者
+北海道大学　鎌田樹
