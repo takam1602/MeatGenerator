@@ -1,6 +1,6 @@
 ### 作成者
 北海道大学　鎌田樹
-kmtttk1602*gmail.com にコンタクトください(*->@に変えてください)
+kmtttk1602\*gmail.com にコンタクトください(\*->@に変えてください)
 
 # MeatGenerator - Pseudo meat images generator
 
