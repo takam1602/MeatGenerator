@@ -1,3 +1,7 @@
+### 作成者
+北海道大学　鎌田樹
+kmtttk1602*gmail.com にコンタクトください(*->@に変えてください)
+
 # MeatGenerator - Pseudo meat images generator
 
 - 疑似ロース芯画像ジェネレータ
@@ -113,5 +117,4 @@ $$3\sigma$$
 - [shimatさんのOpenCvSharp](https://github.com/shimat/opencvsharp)
 - [firebase](https://firebase.google.com/)
 
-# 作成者
-北海道大学　鎌田樹
+
